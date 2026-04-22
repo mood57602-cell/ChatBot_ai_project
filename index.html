@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>مساعد كلية الغد الدولية الذكي | المهندس حسام الصائدي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Traditional Arabic', 'Arial', sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* الحاوية الرئيسية - شبكة مرنة */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* ========= القائمة الجانبية (RTL: تظهر على اليمين بصرياً) ========= */
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px 16px;
+            box-shadow: -2px 0 12px rgba(0,0,0,0.05);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        /* للشاشات الصغيرة: إمكانية طي القائمة (اختياري) */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                right: -280px;
+                top: 0;
+                height: 100%;
+                z-index: 1000;
+                transition: right 0.3s;
+                box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+            }
+            .sidebar.open {
+                right: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        .menu-toggle {
+            display: none;
+            background: #2c7da0;
+            color: white;
+            border: none;
+            font-size: 24px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 25px;
+            background: #ffffffcc;
+            border-radius: 28px;
+            padding: 12px;
+        }
+        .logo-area h2 {
+            color: #0b3b4f;
+            font-size: 1.5rem;
+            margin: 8px 0 4px;
+        }
+        .logo-area p {
+            color: #2c7da0;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .logo-icon {
+            font-size: 58px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+        }
+        .info-card h3 {
+            color: #0f4c5f;
+            border-right: 4px solid #2c7da0;
+            padding-right: 12px;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        .info-card p, .info-card ul {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #1e293b;
+        }
+        .info-card ul {
+            padding-right: 20px;
+        }
+        .info-card li {
+            margin: 6px 0;
+        }
+        .badge {
+            background: #e6f7ff;
+            color: #0077b6;
+            border-radius: 40px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin: 4px 4px 0 0;
+        }
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 16px 0;
+        }
+        .footer-sidebar {
+            font-size: 0.7rem;
+            text-align: center;
+            color: #6c757d;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        /* ========= منطقة الدردشة الرئيسية ========= */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f9fafb;
+            overflow: hidden;
+        }
+
+        /* شريط التطبيق العلوي */
+        .app-bar {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .app-bar h1 {
+            font-size: 1.4rem;
+            color: #0b3b4f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .app-bar button {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+        .clear-btn {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .clear-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* حاوية الدردشة (فقاعات) */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+        /* تنسيق الرسائل */
+        .message {
+            display: flex;
+            max-width: 85%;
+            animation: fadeIn 0.2s ease;
+        }
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message.bot {
+            align-self: flex-start;
+        }
+        .bubble {
+            padding: 12px 18px;
+            border-radius: 24px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .user .bubble {
+            background: #d9f0e1;
+            color: #0a2f2a;
+            border-bottom-left-radius: 6px;
+            border-left: 3px solid #2a9d8f;
+        }
+        .bot .bubble {
+            background: #ffffff;
+            color: #1e293b;
+            border-bottom-right-radius: 6px;
+            border-right: 3px solid #2c7da0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .avatar {
+            font-size: 28px;
+            margin: 0 8px;
+            align-self: flex-end;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* منطقة الإدخال */
+        .input-area {
+            background: white;
+            border-top: 1px solid #e9ecef;
+            padding: 16px 24px 20px;
+        }
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 48px;
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            transition: 0.2s;
+        }
+        .input-wrapper:focus-within {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+        #userInput {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 14px 8px;
+            font-size: 1rem;
+            outline: none;
+            font-family: inherit;
+            resize: none;
+        }
+        #sendBtn {
+            background: #2c7da0;
+            border: none;
+            color: white;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #sendBtn:hover {
+            background: #1f5e7a;
+        }
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+        .suggestion-chip {
+            background: #eef2ff;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #1e40af;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .suggestion-chip:hover {
+            background: #d9e6f5;
+        }
+        .typing {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #2c7da0;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8);}
+            50% { opacity: 1; transform: scale(1.2);}
+        }
+        @media (max-width: 680px) {
+            .sidebar {
+                width: 280px;
+            }
+            .message {
+                max-width: 95%;
+            }
+            .bubble {
+                font-size: 0.85rem;
+            }
+        }
+        /* زر القائمة الجانبية للهواتف */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            font-size: 26px;
+            border: none;
+            cursor: pointer;
+            color: #0b3b4f;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            .app-bar h1 {
+                font-size: 1.1rem;
+            }
+        }
+        /* تذييل صغير داخل الدردشة */
+        .footer-chat {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- القائمة الجانبية -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon">🏥🎓</div>
+            <h2>كلية الغد الدولية</h2>
+            <p>للعلوم الصحية والتقنية - صنعاء، اليمن</p>
+        </div>
+
+        <div class="info-card">
+            <h3>🧑‍💻 المبرمج</h3>
+            <p><strong>المهندس حسام الصائدي</strong><br>مطور ذكاء اصطناعي وتطبيقات<br>✉️ hussam.algad@example.com</p>
+        </div>
+
+        <div class="info-card">
+            <h3>📍 معلومات الكلية</h3>
+            <p><strong>الموقع:</strong> شارع المطار، دارس، جوار المعهد الأمريكي الفرنسي الدولي، صنعاء</p>
+            <p><strong>📞 هاتف:</strong> 01340556، 01340716، 01340738<br><strong>واتساب:</strong> 771276677</p>
+            <p><strong>✉️ البريد:</strong> info@gic-edu.net</p>
+        </div>
+
+        <div class="info-card">
+            <h3>📚 التخصصات</h3>
+            <p><strong>🩺 طبية (9):</strong> التخدير، الصيدلة، فني عمليات، القبالة، مساعد طبيب، التمريض، المختبرات، الأشعة، طب الطوارئ.</p>
+            <p><strong>💻 تقنية (4):</strong> الأمن السيبراني، الحاسوب، تقنية المعلومات، الذكاء الاصطناعي.</p>
+            <p><strong>📊 إدارية (2):</strong> إدارة الأعمال، المحاسبة.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>🎁 المزايا والتخفيضات</h3>
+            <p>✅ مقعد مجاني للتوفل<br>✅ تخفيض 45% للعام 2025-2026<br>✅ رسوم تسجيل مجانية<br>✅ خدمة استخراج وثائق الثانوية<br>✅ مبنى حديث، كادر مؤهل، تدريب عملي</p>
+        </div>
+
+        <div class="info-card">
+            <h3>📜 شروط القبول</h3>
+            <p>شهادة ثانوية، استمارة الالتحاق، صور شخصية، صورة بطاقة، مقابلة وفحص طبي، حسن السيرة والسلوك.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>💡 نصائح سريعة</h3>
+            <p>✨ حدد شغفك بين المجالات الطبية أو التقنية.<br>✨ استفد من التخفيض 45% والتسجيل المبكر.<br>✨ تواصل عبر الواتساب للاستفسار الفوري.</p>
+        </div>
+        <div class="footer-sidebar">
+            © 2025 | تصميم المهندس حسام الصائدي
+        </div>
+    </div>
+
+    <!-- المنطقة الرئيسية للدردشة -->
+    <div class="chat-main">
+        <div class="app-bar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="mobile-menu-btn" id="menuToggleBtn">☰</button>
+                <h1>🤖 المساعد الذكي لكلية الغد الدولية</h1>
+            </div>
+            <button class="clear-btn" id="clearChatBtn">🧹 مسح المحادثة</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- رسالة الترحيب ستضاف عبر JS -->
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="userInput" rows="1" placeholder="اكتب استفسارك هنا... (اسأل عن التخصصات، القبول، الرسوم...)" style="resize: none;"></textarea>
+                <button id="sendBtn">إرسال 📤</button>
+            </div>
+            <div class="suggestions" id="suggestionsArea">
+                <span class="suggestion-chip" data-question="ما هي التخصصات المتاحة؟">📌 التخصصات</span>
+                <span class="suggestion-chip" data-question="أين موقع الكلية؟">📍 الموقع</span>
+                <span class="suggestion-chip" data-question="كم رسوم الدراسة والتخفيضات؟">💰 الرسوم</span>
+                <span class="suggestion-chip" data-question="ما هي شروط القبول؟">📜 شروط القبول</span>
+                <span class="suggestion-chip" data-question="مزايا الدراسة في الكلية؟">🎁 المزايا</span>
+            </div>
+            <div class="footer-chat">
+                ✨ يعمل بتقنية Google Gemini AI | بواسطة المهندس حسام الصائدي
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===================== مفتاح API (افتراضي) =====================
+    const GEMINI_API_KEY = "AIzaSyDxqnRz5GZF-oGHdNQ1_QnpPznaPp5m6gc";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    
+    // ===================== قاعدة المعرفة الاحتياطية (متكاملة) =====================
+    const KNOWLEDGE_BASE = {
+        "التخصصات": "📚 **تخصصات كلية الغد الدولية:**\n🩺 طبية (9): التخدير والإنعاش، الصيدلة، فني عمليات، القبالة، مساعد طبيب، التمريض، المختبرات الطبية، الأشعة، طب الطوارئ.\n💻 تقنية (4): الأمن السيبراني، الحاسوب، تقنية المعلومات، الذكاء الاصطناعي.\n📊 إدارية (2): إدارة الأعمال، المحاسبة.\nهل تريد تفاصيل عن تخصص معين؟",
+        "الموقع": "📍 **موقع الكلية:** صنعاء، اليمن - شارع المطار، دارس، جوار المعهد الأمريكي الفرنسي الدولي. يمكنك الاتصال بنا للتوجيه.",
+        "هواتف": "📞 **أرقام التواصل:** 01340556، 01340716، 01340738 | واتساب: 771276677 | البريد: info@gic-edu.net",
+        "الرسوم": "💰 **الرسوم الدراسية:** رسوم تسجيل مجانية + تخفيض يصل إلى 45% للعام 2025-2026. استفسر عن التفاصيل عبر الهاتف.",
+        "شروط القبول": "📜 **شروط القبول:** شهادة ثانوية، استمارة الالتحاق، صور شخصية، صورة بطاقة، مقابلة وفحص طبي، حسن السيرة.",
+        "المزايا": "🎁 **مزايا كلية الغد:** مقعد مجاني للتوفل، تخفيض 45%، رسوم تسجيل مجانية، خدمة استخراج وثائق الثانوية، مبنى حديث، كادر مؤهل، تدريب عملي، شراكات استراتيجية.",
+        "لماذا الكلية": "🏆 **لماذا تختار كلية الغد؟** أول كلية خاصة للتعليم الفني باليمن، شهادات معتمدة، تخصصات متميزة، بيئة تعليمية محفزة، فرص توظيفية واعدة."
+    };
+    
+    function getFallbackResponse(userMsg) {
+        const lowerMsg = userMsg.toLowerCase();
+        if (lowerMsg.includes("تخصص") || lowerMsg.includes("اقسام") || lowerMsg.includes("ما هي التخصصات")) 
+            return KNOWLEDGE_BASE["التخصصات"];
+        if (lowerMsg.includes("موقع") || lowerMsg.includes("عنوان") || lowerMsg.includes("اين"))
+            return KNOWLEDGE_BASE["الموقع"];
+        if (lowerMsg.includes("هاتف") || lowerMsg.includes("واتس") || lowerMsg.includes("تواصل") || lowerMsg.includes("ارقام"))
+            return KNOWLEDGE_BASE["هواتف"];
+        if (lowerMsg.includes("رسوم") || lowerMsg.includes("تكلفة") || lowerMsg.includes("سعر") || lowerMsg.includes("تخفيض"))
+            return KNOWLEDGE_BASE["الرسوم"];
+        if (lowerMsg.includes("قبول") || lowerMsg.includes("شروط") || lowerMsg.includes("اوراق") || lowerMsg.includes("تسجيل"))
+            return KNOWLEDGE_BASE["شروط القبول"];
+        if (lowerMsg.includes("مزايا") || lowerMsg.includes("مميزات") || lowerMsg.includes("عروض"))
+            return KNOWLEDGE_BASE["المزايا"];
+        if (lowerMsg.includes("لماذا") || lowerMsg.includes("اختيار") || lowerMsg.includes("أفضل"))
+            return KNOWLEDGE_BASE["لماذا الكلية"];
+        // رد عام
+        return `مرحباً! أنا مساعد كلية الغد الدولية 🎓. يمكنني مساعدتك في: التخصصات، شروط القبول، الرسوم والتخفيضات، الموقع، المزايا، وأي استفسار آخر. اطرح سؤالك وسأجيبك بكل سرور.\n\n📌 مثال: "ما هي التخصصات التقنية؟" أو "كم نسبة التخفيض؟"`;
+    }
+    
+    // ===================== إدارة الدردشة والسياق =====================
+    let conversationHistory = [];   // سيتم تخزين كائنات {role: "user"/"model", content}
+    let isWaitingResponse = false;
+    
+    const chatContainer = document.getElementById("chatMessages");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const clearBtn = document.getElementById("clearChatBtn");
+    const suggestionsArea = document.getElementById("suggestionsArea");
+    const menuToggleBtn = document.getElementById("menuToggleBtn");
+    const sidebar = document.getElementById("sidebar");
+    
+    // نظام عرض الرسائل
+    function addMessageToUI(role, text, isError = false) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${role === "user" ? "user" : "bot"}`;
+        const avatar = role === "user" ? "🧑‍🎓" : "🤖";
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        // معالجة markdown بسيط (عرض نجمات كخط عريض)
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        bubble.innerHTML = formattedText.replace(/\n/g, '<br>');
+        if (isError) bubble.style.borderRightColor = "#dc2626";
+        messageDiv.innerHTML = `<div class="avatar">${avatar}</div>`;
+        messageDiv.appendChild(bubble);
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    function showTypingIndicator() {
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "message bot";
+        typingDiv.id = "typingIndicator";
+        typingDiv.innerHTML = `<div class="avatar">🤖</div><div class="bubble"><div class="typing">يكتب<span class="dot"></span><span class="dot" style="animation-delay:0.2s"></span><span class="dot" style="animation-delay:0.4s"></span></div></div>`;
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    function removeTypingIndicator() {
+        const indicator = document.getElementById("typingIndicator");
+        if (indicator) indicator.remove();
+    }
+    
+    // استدعاء Gemini API مع السياق
+    async function callGeminiAPI(userMessage) {
+        // إضافة رسالة المستخدم للتاريخ
+        conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
+        
+        // بناء payload مع السياق (آخر 10 رسائل مثلاً للحفاظ على الطول)
+        const historyToSend = conversationHistory.slice(-12);
+        const payload = {
+            contents: historyToSend,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800,
+                topP: 0.9
+            },
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" }
+            ]
+        };
+        
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                console.warn("Gemini API error:", errText);
+                throw new Error(`API responded with ${response.status}`);
+            }
+            const data = await response.json();
+            const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أستطع معالجة الطلب.";
+            // إضافة رد البوت للتاريخ
+            conversationHistory.push({ role: "model", parts: [{ text: botReply }] });
+            return botReply;
+        } catch (error) {
+            console.error("Gemini API failed:", error);
+            return null;
+        }
+    }
+    
+    // معالجة الرد النهائي (مع احتياطي)
+    async function handleSendMessage() {
+        if (isWaitingResponse) return;
+        const message = userInput.value.trim();
+        if (!message) return;
+        
+        // عرض رسالة المستخدم
+        addMessageToUI("user", message);
+        userInput.value = "";
+        isWaitingResponse = true;
+        showTypingIndicator();
+        
+        let botReply = null;
+        let usedFallback = false;
+        
+        // محاولة Gemini API أولاً
+        try {
+            botReply = await callGeminiAPI(message);
+            if (!botReply) throw new Error("لا رد من Gemini");
+        } catch (e) {
+            usedFallback = true;
+        }
+        
+        // إذا فشل API أو لم يرد، استخدم الاحتياطي
+        if (!botReply) {
+            botReply = getFallbackResponse(message);
+            // إضافة توقيع + إشعار احتياطي
+            botReply = `${botReply}\n\n⚠️ *(تم الرد من النظام الاحتياطي)*`;
+        }
+        
+        // إضافة توقيع المهندس في كل الردود إن لم يكن موجوداً
+        const signature = "\n\n---\n✨ بواسطة المهندس حسام الصائدي | 🎓 كلية الغد الدولية";
+        if (!botReply.includes("المهندس حسام")) {
+            botReply += signature;
+        }
+        
+        removeTypingIndicator();
+        addMessageToUI("bot", botReply, usedFallback);
+        
+        // إذا نجح API وكان الرد من Gemini، لا نحتاج لتكرار الإضافة للتاريخ (تمت داخل callGeminiAPI)
+        // لكن لو دخلنا للاحتياطي، يجب إضافة رد الاحتياطي يدويًا للسياق (للمحادثة القادمة)
+        if (usedFallback) {
+            conversationHistory.push({ role: "model", parts: [{ text: botReply }] });
+        }
+        
+        isWaitingResponse = false;
+    }
+    
+    // مسح المحادثة بالكامل وإعادة التعيين
+    function clearConversation() {
+        conversationHistory = [];
+        // إعادة تعيين رسالة الترحيب
+        chatContainer.innerHTML = "";
+        const welcomeText = `مرحباً بك في المساعد الذكي لكلية الغد الدولية! 🎓\n\nأنا هنا للإجابة على جميع استفساراتك حول التخصصات، شروط القبول، الرسوم، المزايا، وأي شيء يخص الكلية. اسأل بحرية 😊\n\n---\n✨ بواسطة المهندس حسام الصائدي | 🎓 كلية الغد الدولية`;
+        addMessageToUI("bot", welcomeText);
+        // إضافة الترحيب للسياق (اختياري)
+        conversationHistory.push({ role: "model", parts: [{ text: welcomeText }] });
+    }
+    
+    // وظيفة مساعدة: إدخال نص في حقل الإدخال وإرسال
+    function sendSuggestion(question) {
+        userInput.value = question;
+        handleSendMessage();
+    }
+    
+    // أحداث
+    sendBtn.addEventListener("click", handleSendMessage);
+    clearBtn.addEventListener("click", clearConversation);
+    userInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    });
+    
+    // النقر على الاقتراحات
+    document.querySelectorAll(".suggestion-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const question = chip.getAttribute("data-question");
+            if (question) sendSuggestion(question);
+        });
+    });
+    
+    // زر القائمة الجانبية للهواتف
+    if (menuToggleBtn) {
+        menuToggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+        // إغلاق القائمة عند الضغط خارجها (اختياري بسيط)
+        document.addEventListener("click", (e) => {
+            if (window.innerWidth <= 768 && sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== menuToggleBtn) {
+                sidebar.classList.remove("open");
+            }
+        });
+    }
+    
+    // تهيئة أولية: رسالة ترحيب
+    clearConversation();
+    
+    // ضبط ارتفاع textarea تلقائي (تحسين)
+    userInput.addEventListener("input", function() {
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 100) + "px";
+    });
+</script>
+</body>
+</html>
